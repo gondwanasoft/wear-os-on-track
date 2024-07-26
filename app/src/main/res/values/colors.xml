@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="farBehind">#f38187</color>
+    <color name="behind">#81acf4</color>
+    <color name="ahead">#81f38b</color>
+    <color name="farAhead">#f2f381</color>
+    <color name="axis">#808080</color>
+    <color name="track">#ffa040</color>
+    <color name="achiev">#00ff80</color>
+</resources>

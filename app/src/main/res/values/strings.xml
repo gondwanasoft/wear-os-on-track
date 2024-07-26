@@ -1,0 +1,14 @@
+<resources>
+    <string name="app_name">On Track</string>
+    <string name="tile_label">Example tile</string>
+    <string name="complication_label">Example complication</string>
+    <string name="energy_complication_label">Energy ahead</string>
+    <string name="steps_complication_label">Steps ahead</string>
+    <string name="distance_complication_label">Distance ahead</string>
+    <string name="floors_complication_label">Floors ahead</string>
+    <string name="title_activity_complic_config">ComplicConfigActivity</string>
+    <string name="tile_energy_desc">Energy used compared to current expectation</string>
+    <string name="tile_steps_desc">Steps taken compared to current expectation</string>
+    <string name="tile_distance_desc">Distance travelled compared to current expectation</string>
+    <string name="tile_floors_desc">Floors climbed compared to current expectation</string>
+</resources>
