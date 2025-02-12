@@ -34,8 +34,8 @@ data class CardData(    // data returned by getAheadCard()
 
 data class ComplicationData(    // data returned by getAheadComplication
     val relProportion: Float,
-    val aheadString: String,
-    val aheadBehind: String
+    val aheadString: String,    // numeric amount
+    val aheadBehind: String     // up or down indicator
 )
 
 data class TileData(    // data returned by getAheadTile
@@ -126,6 +126,9 @@ class Metric(private val metricIndex: Int, val name: String, val icon: Int, val 
             multiplier = if (settings.isImperial) 0.00062137f else 0.001f   // miles or km from metres
         }
     }
+
+    val complicTitle: String
+        get() = unitAbbrev ?: name
 
     //************************************************************************************************* Clever maths *****
 
@@ -286,7 +289,7 @@ class Metric(private val metricIndex: Int, val name: String, val icon: Int, val 
         var aheadString = relData.aheadString
         var aheadBehind = "▲"
         if (aheadString[0] == '-') {aheadBehind = "▼"; aheadString = aheadString.drop(1)}
-        return ComplicationData(rel / gaugeRange, aheadString, aheadBehind)
+        return ComplicationData(rel / gaugeRange, aheadString, complicTitle+aheadBehind)
     }
 
     fun getAheadTile(achiev: Float, timestamp: Instant): TileData? {

@@ -203,8 +203,6 @@ abstract class OnTrackTileService<T : Any>(private val tileServiceData: TileServ
         //Log.i(tag, "startListening() has set isListening=${tileServiceData.isListening}")
     }
 
-// TODO clean up from here
-
     private fun layout(text: String? = null): LayoutElementBuilders.LayoutElement {
         // text: status message to display in lieu of reading.
         // Test layout with large fonts and long strings ("loading...", "Check settings", "22,222", "km behind").

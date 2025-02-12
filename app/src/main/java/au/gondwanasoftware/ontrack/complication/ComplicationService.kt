@@ -17,6 +17,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.wear.watchface.complications.data.ComplicationData
 import androidx.wear.watchface.complications.data.ComplicationType
 import androidx.wear.watchface.complications.data.MonochromaticImage
+import androidx.wear.watchface.complications.data.NoDataComplicationData
 import androidx.wear.watchface.complications.data.PlainComplicationText
 import androidx.wear.watchface.complications.data.RangedValueComplicationData
 import androidx.wear.watchface.complications.datasource.ComplicationDataSourceService
@@ -43,7 +44,7 @@ abstract class ComplicationService<T : Any>(private val metric: Metric,
     private lateinit var passiveMonitoringClient: PassiveMonitoringClient
     private var isPassiveMonitoringClientListening = false  // listening for metric updates
     private var complicationRequestListener: ComplicationRequestListener? = null
-    private lateinit var passiveListenerConfig : PassiveListenerConfig
+    private lateinit var passiveListenerConfig: PassiveListenerConfig
     private lateinit var updateRequester: ComplicationDataSourceUpdateRequester
     private var metricReaderRequest: MetricReaderRequest? = null
 
@@ -51,7 +52,7 @@ abstract class ComplicationService<T : Any>(private val metric: Metric,
         //Log.i(tag, "ComplicationService init()")
     }*/
 
-    abstract fun dataPointToFloat(reading: T) : Float
+    abstract fun dataPointToFloat(reading: T): Float
 
     override fun onCreate() {
         super.onCreate()
@@ -81,7 +82,7 @@ abstract class ComplicationService<T : Any>(private val metric: Metric,
         if (type != ComplicationType.RANGED_VALUE) {
             return null
         }
-        return createComplicationData(0.5f, "12", "▲", null)
+        return createComplicationData(0.5f, "12", metric.complicTitle+"▲", null)
     }
 
     override fun onComplicationActivated(complicationInstanceId: Int, type: ComplicationType) {
@@ -92,7 +93,7 @@ abstract class ComplicationService<T : Any>(private val metric: Metric,
         val permitted = checkSelfPermission(Manifest.permission.ACTIVITY_RECOGNITION) == PackageManager.PERMISSION_GRANTED
         //Log.i(tag, "ComplicationService${metric.name} permitted=$permitted")
         if (!permitted) {
-            Log.w(tag,"onComplicationActivated(): not permitted")
+            Log.w(tag, "onComplicationActivated(): not permitted")
             // Doesn't matter at this stage: onComplicationRequest() will prompt to "SEE APP".
         }
     }
@@ -124,7 +125,7 @@ abstract class ComplicationService<T : Any>(private val metric: Metric,
                 metricReaderRequest = null
                 if (!isComplicationListening) return
 
-                var complicationData : RangedValueComplicationData? = null
+                var complicationData: ComplicationData? = null
                 val appIntent = Intent(this, MainActivity::class.java)
                 appIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)       // lint doesn't like this but it seems necessary
                 val complicationPendingIntent = PendingIntent.getActivity(
@@ -147,12 +148,14 @@ abstract class ComplicationService<T : Any>(private val metric: Metric,
                             complicationPendingIntent
                         ); else createSeeAppComplicationData(complicationPendingIntent)
                     }
+
                     MetricReaderResponseType.NONE -> {} // timeout; use null complicationData
                     MetricReaderResponseType.E_PERM -> {
                         complicationData = createSeeAppComplicationData(complicationPendingIntent)
                     }
                 }
 
+                //Log.d(tag, ((complicationData as RangedValueComplicationData)?.value ?: "null!").toString())
                 listener.onComplicationData(complicationData)
                 complicationRequestListener = null
                 isComplicationListening = false
@@ -172,25 +175,33 @@ abstract class ComplicationService<T : Any>(private val metric: Metric,
         }
     }
 
-    private fun createSeeAppComplicationData(complicationPendingIntent: PendingIntent?) =
-        createComplicationData(null, "SEE", "APP", complicationPendingIntent)
+    /*private fun createSeeAppComplicationData(complicationPendingIntent: PendingIntent?) =
+        createComplicationData(null, "SEE APP", "⚠", complicationPendingIntent)*/
+    // TODO ^ should probably return NoDataComplicationData with RangedValueComplicationData.PLACEHOLDER for value; will bugger up return type
 
-    private fun createComplicationData(value: Float?, absString: String, sense: String, complicationPendingIntent: PendingIntent?) =
+    private fun createSeeAppComplicationData(complicationPendingIntent: PendingIntent?): ComplicationData {
+        val placeholder  = createComplicationData(null, "SEE APP", metric.complicTitle+"⚠", complicationPendingIntent)
+        return NoDataComplicationData(placeholder)
+    }
+
+    private fun createComplicationData(value: Float?, text: String, title: String, complicationPendingIntent: PendingIntent?) =
         // LUXURY 9 consider setColorRamp for all RangedValueComplicationData.Builder
         RangedValueComplicationData.Builder(
             // https://developer.android.com/reference/androidx/wear/watchface/complications/data/RangedValueComplicationData.Builder#setValueType(kotlin.Int)
             min = -1f,
             max = 1f,
-            value = value?.coerceIn(-1f,1f) ?: RangedValueComplicationData.PLACEHOLDER,
-            contentDescription = PlainComplicationText.Builder("${metric.name} $absString $sense").build()
+            value = value?.coerceIn(-1f,1f) ?: RangedValueComplicationData.PLACEHOLDER, // TODO fix use of PLACEHOLDER
+            contentDescription = PlainComplicationText.Builder("${metric.name} $text $title").build()
         ).setTitle(
-            PlainComplicationText.Builder(absString).build()
+            PlainComplicationText.Builder(title).build()
         ).setText(
-            PlainComplicationText.Builder(sense).build()
+            PlainComplicationText.Builder(text).build()
         ).setValueType(
             RangedValueComplicationData.TYPE_RATING
         ).setMonochromaticImage(
-            MonochromaticImage.Builder(Icon.createWithResource(this, iconId)).build()
+            MonochromaticImage.Builder(Icon.createWithResource(this, iconId))
+                .setAmbientImage(Icon.createWithResource(this, iconId))
+                .build()
         ).setTapAction(
             complicationPendingIntent
         ).build()
